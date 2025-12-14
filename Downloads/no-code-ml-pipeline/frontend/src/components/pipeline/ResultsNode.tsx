@@ -1,13 +1,15 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { Handle, Position, type NodeProps } from 'reactflow'
-import { BarChart3, TrendingUp, Target, Award } from 'lucide-react'
+import { BarChart3, TrendingUp, Target, Award, Maximize2, X } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ConfusionMatrixChart } from '@/components/shared/ConfusionMatrixChart'
 import { usePipelineStore } from '@/lib/store'
 
 export const ResultsNode = memo<NodeProps>(({ data }) => {
     const { modelResults, modelStatus } = usePipelineStore()
+    const [showMatrix, setShowMatrix] = useState(false)
 
     return (
         <>
@@ -109,10 +111,39 @@ export const ResultsNode = memo<NodeProps>(({ data }) => {
                                     ✨ Model Training Complete!
                                 </p>
                             </div>
+
+                            {/* View Confusion Matrix Button */}
+                            {modelResults.confusion_matrix && (
+                                <button
+                                    onClick={() => setShowMatrix(true)}
+                                    className="w-full px-4 py-2 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 hover:border-orange-500/50 rounded-lg text-sm text-orange-400 font-medium transition flex items-center justify-center gap-2"
+                                >
+                                    <Maximize2 className="w-4 h-4" />
+                                    View Confusion Matrix
+                                </button>
+                            )}
                         </div>
                     )}
                 </CardContent>
             </Card>
+
+            {/* Confusion Matrix Modal */}
+            {showMatrix && modelResults?.confusion_matrix && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="relative w-full max-w-4xl max-h-[90vh] overflow-auto">
+                        <button
+                            onClick={() => setShowMatrix(false)}
+                            className="absolute top-4 right-4 z-10 p-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-600 transition"
+                        >
+                            <X className="w-5 h-5 text-slate-300" />
+                        </button>
+                        <ConfusionMatrixChart
+                            matrix={modelResults.confusion_matrix}
+                            classLabels={modelResults.class_labels}
+                        />
+                    </div>
+                </div>
+            )}
         </>
     )
 })

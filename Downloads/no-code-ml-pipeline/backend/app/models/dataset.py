@@ -29,3 +29,5 @@ class DatasetPreview(BaseModel):
     info: DatasetInfo
     preview: List[Dict[str, Any]] = Field(description="First 10 rows of data")
     statistics: Optional[Dict[str, Any]] = None
+    column_categories: Optional[Dict[str, str]] = Field(default=None, description="Column type categories (numeric, categorical, datetime)")
+    unique_counts: Optional[Dict[str, int]] = Field(default=None, description="Number of unique values per column")

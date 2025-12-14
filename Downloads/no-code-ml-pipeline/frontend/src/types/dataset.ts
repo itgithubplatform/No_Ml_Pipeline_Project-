@@ -20,4 +20,6 @@ export interface DatasetPreview {
     info: DatasetInfo
     preview: Record<string, any>[]
     statistics?: Record<string, any>
+    column_categories?: Record<string, 'numeric' | 'categorical' | 'datetime'>
+    unique_counts?: Record<string, number>
 }

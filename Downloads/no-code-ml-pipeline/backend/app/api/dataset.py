@@ -52,3 +52,49 @@ async def get_dataset_preview(dataset_id: str, num_rows: int = 10):
             status_code=500,
             detail=f"Error getting dataset preview: {str(e)}"
         )
+
+
+@router.post("/dataset/set-target")
+async def set_target_column(dataset_id: str, target_column: str):
+    """
+    Set target column for ML training with validation.
+    
+    Args:
+        dataset_id: Dataset identifier
+        target_column: Name of target column
+        
+    Returns:
+        Validation result
+    """
+    try:
+        return DatasetService.set_target_column(dataset_id, target_column)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error setting target column: {str(e)}"
+        )
+
+
+@router.get("/dataset/{dataset_id}/target-recommendations")
+async def get_target_recommendations(dataset_id: str):
+    """
+    Get recommended target columns for classification.
+    
+    Args:
+        dataset_id: Dataset identifier
+        
+    Returns:
+        List of recommended columns with scores
+    """
+    try:
+        return DatasetService.get_target_recommendations(dataset_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error getting target recommendations: {str(e)}"
+        )
+

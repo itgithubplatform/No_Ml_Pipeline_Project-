@@ -99,6 +99,7 @@ class ModelService:
                 'recall': metrics.get('recall'),
                 'f1_score': metrics.get('f1_score'),
                 'confusion_matrix': metrics['confusion_matrix'],
+                'class_labels': metrics['class_labels'],
                 'feature_importance': feature_importance
             }
             
@@ -155,7 +156,8 @@ class ModelService:
         """
         metrics = {
             'accuracy': float(accuracy_score(y_true, y_pred)),
-            'confusion_matrix': confusion_matrix(y_true, y_pred).tolist()
+            'confusion_matrix': confusion_matrix(y_true, y_pred).tolist(),
+            'class_labels': [str(label) for label in sorted(np.unique(y_true))]
         }
         
         # Calculate precision, recall, f1 (handle binary and multiclass)

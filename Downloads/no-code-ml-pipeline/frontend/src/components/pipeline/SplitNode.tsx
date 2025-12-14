@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { usePipelineStore } from '@/lib/store'
 import { performTrainTestSplit } from '@/lib/api'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { getNodeClasses } from '@/lib/nodeStyles'
 
 export const SplitNode = memo<NodeProps>(({ data }) => {
     const {
@@ -54,7 +55,7 @@ export const SplitNode = memo<NodeProps>(({ data }) => {
     return (
         <>
             <Handle type="target" position={Position.Top} className="w-3 h-3 bg-cyan-500" />
-            <Card className="min-w-[320px] border-2 border-purple-500/50 bg-slate-900/95 backdrop-blur shadow-xl">
+            <Card className={`min-w-[320px] border-2 backdrop-blur shadow-xl transition-all duration-300 ${getNodeClasses(splitStatus === 'splitting' ? 'processing' : splitStatus)}`}>
                 <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Scissors className="w-5 h-5 text-purple-400" />

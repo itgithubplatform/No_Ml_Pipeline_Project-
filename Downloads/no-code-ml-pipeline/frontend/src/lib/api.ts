@@ -70,3 +70,16 @@ export const getModelResults = async (modelId: string) => {
     const response = await api.get(`/model/${modelId}`)
     return response.data
 }
+
+export const setTargetColumn = async (datasetId: string, targetColumn: string) => {
+    const response = await api.post('/dataset/set-target', null, {
+        params: { dataset_id: datasetId, target_column: targetColumn },
+    })
+    return response.data
+}
+
+export const getTargetRecommendations = async (datasetId: string) => {
+    const response = await api.get(`/dataset/${datasetId}/target-recommendations`)
+    return response.data
+}
+

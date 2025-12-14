@@ -5,6 +5,7 @@ interface PipelineState {
     // Dataset
     datasetId: string | null
     datasetInfo: any | null
+    datasetPreview: any | null
     targetColumn: string | null
 
     // Nodes & Edges
@@ -23,6 +24,7 @@ interface PipelineState {
     // Actions
     setDatasetId: (id: string) => void
     setDatasetInfo: (info: any) => void
+    setDatasetPreview: (preview: any) => void
     setTargetColumn: (column: string) => void
     setUploadStatus: (status: 'idle' | 'uploading' | 'success' | 'error') => void
     setPreprocessStatus: (status: 'idle' | 'processing' | 'success' | 'error') => void
@@ -38,6 +40,7 @@ export const usePipelineStore = create<PipelineState>((set) => ({
     // Initial state
     datasetId: null,
     datasetInfo: null,
+    datasetPreview: null,
     targetColumn: null,
     nodes: [],
     edges: [],
@@ -50,6 +53,7 @@ export const usePipelineStore = create<PipelineState>((set) => ({
     // Actions
     setDatasetId: (id) => set({ datasetId: id }),
     setDatasetInfo: (info) => set({ datasetInfo: info }),
+    setDatasetPreview: (preview) => set({ datasetPreview: preview }),
     setTargetColumn: (column) => set({ targetColumn: column }),
     setUploadStatus: (status) => set({ uploadStatus: status }),
     setPreprocessStatus: (status) => set({ preprocessStatus: status }),
@@ -62,6 +66,7 @@ export const usePipelineStore = create<PipelineState>((set) => ({
     reset: () => set({
         datasetId: null,
         datasetInfo: null,
+        datasetPreview: null,
         targetColumn: null,
         uploadStatus: 'idle',
         preprocessStatus: 'idle',

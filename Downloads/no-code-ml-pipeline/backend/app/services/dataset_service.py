@@ -115,8 +115,8 @@ class DatasetService:
         df = cls.get_dataset(dataset_id)
         info = cls.get_dataset_info(dataset_id)
         
-        # Get preview rows
-        preview_data = df.head(num_rows).fillna("").to_dict(orient='records')
+        # Get preview rows (replace NaN with None for JSON serialization)
+        preview_data = df.head(num_rows).where(pd.notnull(df.head(num_rows)), None).to_dict(orient='records')
         
         # Get basic statistics for numeric columns
         numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
@@ -124,10 +124,28 @@ class DatasetService:
         if numeric_cols:
             statistics = df[numeric_cols].describe().to_dict()
         
+        # Categorize columns by type
+        column_categories = {}
+        unique_counts = {}
+        
+        for col in df.columns:
+            # Count unique values
+            unique_counts[col] = int(df[col].nunique())
+            
+            # Categorize column type
+            if pd.api.types.is_numeric_dtype(df[col]):
+                column_categories[col] = 'numeric'
+            elif pd.api.types.is_datetime64_any_dtype(df[col]):
+                column_categories[col] = 'datetime'
+            else:
+                column_categories[col] = 'categorical'
+        
         return DatasetPreview(
             info=info,
             preview=preview_data,
-            statistics=statistics
+            statistics=statistics,
+            column_categories=column_categories,
+            unique_counts=unique_counts
         )
     
     @classmethod
@@ -151,3 +169,128 @@ class DatasetService:
             missing_values={col: int(df[col].isna().sum()) for col in df.columns}
         )
         cls._metadata[dataset_id] = info
+    
+    @classmethod
+    def set_target_column(cls, dataset_id: str, target_column: str) -> Dict[str, Any]:
+        """
+        Set and validate target column for ML.
+        
+        Args:
+            dataset_id: Dataset identifier
+            target_column: Name of target column
+            
+        Returns:
+            Validation result with warnings/suggestions
+        """
+        df = cls.get_dataset(dataset_id)
+        
+        # Validate column exists
+        if target_column not in df.columns:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Column '{target_column}' not found in dataset"
+            )
+        
+        # Get column info
+        unique_values = int(df[target_column].nunique())
+        data_type = str(df[target_column].dtype)
+        
+        # Validation logic
+        is_valid = True
+        warning = None
+        suggestion = None
+        
+        # Too many unique values for classification
+        if unique_values > 50:
+            warning = f"Column has {unique_values} unique values. This may not be suitable for classification."
+            suggestion = "Consider using a regression model instead, or bin the values into categories."
+        
+        # Too few samples per class
+        elif unique_values > 2:
+            value_counts = df[target_column].value_counts()
+            min_samples = value_counts.min()
+            if min_samples < 5:
+                warning = f"Some classes have very few samples (minimum: {min_samples})."
+                suggestion = "Consider collecting more data or combining rare classes."
+        
+        # All values are the same
+        if unique_values == 1:
+            is_valid = False
+            warning = "All values are identical. Cannot train a classifier."
+            suggestion = "This column cannot be used as a target."
+        
+        # Update metadata
+        if dataset_id in cls._metadata:
+            cls._metadata[dataset_id].target_column = target_column
+        
+        return {
+            'is_valid': is_valid,
+            'column_name': target_column,
+            'unique_values': unique_values,
+            'data_type': data_type,
+            'warning': warning,
+            'suggestion': suggestion
+        }
+    
+    @classmethod
+    def get_target_recommendations(cls, dataset_id: str) -> Dict[str, Any]:
+        """
+        Get recommended target columns based on data analysis.
+        
+        Args:
+            dataset_id: Dataset identifier
+            
+        Returns:
+            List of recommended columns with scores
+        """
+        df = cls.get_dataset(dataset_id)
+        recommendations = []
+        
+        for col in df.columns:
+            unique_values = df[col].nunique()
+            is_numeric = pd.api.types.is_numeric_dtype(df[col])
+            
+            # Score based on suitability for classification
+            score = 0
+            reason = ""
+            
+            # Ideal: 2-10 unique values
+            if 2 <= unique_values <= 10:
+                score = 100
+                reason = "Perfect for classification"
+            # Good: 11-20 unique values
+            elif 11 <= unique_values <= 20:
+                score = 80
+                reason = "Good for classification"
+            # Okay: 21-50 unique values
+            elif 21 <= unique_values <= 50:
+                score = 60
+                reason = "Acceptable for classification"
+            # Not ideal: 1 or >50 unique values
+            elif unique_values == 1:
+                score = 0
+                reason = "All values are the same"
+            else:
+                score = 30
+                reason = "Too many unique values"
+            
+            # Boost score for categorical/object types
+            if not is_numeric and score > 0:
+                score = min(score + 10, 100)
+            
+            if score >= 50:  # Only recommend decent options
+                recommendations.append({
+                    'column': col,
+                    'score': score,
+                    'unique_values': unique_values,
+                    'reason': reason
+                })
+        
+        # Sort by score descending
+        recommendations.sort(key=lambda x: x['score'], reverse=True)
+        
+        return {
+            'recommendations': recommendations[:5],  # Top 5
+            'total_columns': len(df.columns)
+        }
+
