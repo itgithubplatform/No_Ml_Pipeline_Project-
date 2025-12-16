@@ -22,6 +22,8 @@ import { PreprocessNode } from './PreprocessNode'
 import { SplitNode } from './SplitNode'
 import { ModelNode } from './ModelNode'
 import { ResultsNode } from './ResultsNode'
+import { HelpPanel } from './HelpPanel'
+import { ProgressTracker } from './ProgressTracker'
 
 const nodeTypes: NodeTypes = {
     upload: UploadNode as any,
@@ -105,7 +107,13 @@ export function PipelineCanvas() {
     )
 
     return (
-        <div className="w-full h-full bg-slate-950">
+        <div className="w-full h-full bg-slate-950 relative">
+            {/* Progress Tracker */}
+            <ProgressTracker />
+
+            {/* Help Panel */}
+            <HelpPanel />
+
             <ReactFlow
                 nodes={nodes}
                 edges={edges}

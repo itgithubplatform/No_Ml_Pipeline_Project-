@@ -40,15 +40,24 @@ class SplitService:
             HTTPException: If split fails
         """
         try:
+            print(f"\n--- TRAIN-TEST SPLIT ---")
+            print(f"Dataset ID: {dataset_id}")
+            print(f"Target Column: {target_column}")
+            print(f"Test Size: {test_size}")
+            
             # Get dataset
+            print(f"Loading dataset...")
             df = DatasetService.get_dataset(dataset_id)
+            print(f"✓ Dataset loaded: {df.shape[0]} rows, {df.shape[1]} columns")
             
             # Validate target column exists
             if target_column not in df.columns:
+                print(f"✗ Target column '{target_column}' not found!")
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Target column '{target_column}' not found in dataset"
+                    detail=f"Target column '{target_column}' not found in dataset. Available: {list(df.columns)}"
                 )
+            print(f"✓ Target column '{target_column}' found")
             
             # Validate test_size
             if not 0.1 <= test_size <= 0.5:
@@ -60,18 +69,82 @@ class SplitService:
             # Separate features and target
             X = df.drop(columns=[target_column])
             y = df[target_column]
+            print(f"✓ Features shape: {X.shape}, Target shape: {y.shape}")
+            
+            # Automatic preprocessing: encode categorical columns
+            print(f"\nStep: Preprocessing categorical columns...")
+            categorical_cols = X.select_dtypes(include=['object']).columns.tolist()
+            
+            if categorical_cols:
+                print(f"✓ Found {len(categorical_cols)} categorical columns: {categorical_cols}")
+                from sklearn.preprocessing import LabelEncoder
+                
+                for col in categorical_cols:
+                    try:
+                        le = LabelEncoder()
+                        # Handle NaN values by converting to string first
+                        X[col] = X[col].fillna('missing')
+                        X[col] = le.fit_transform(X[col].astype(str))
+                        print(f"  ✓ Encoded '{col}' ({len(le.classes_)} unique values)")
+                    except Exception as e:
+                        print(f"  ✗ Failed to encode '{col}': {str(e)}")
+                        raise
+            else:
+                print(f"✓ No categorical columns found")
+            
+            # Handle missing values in numeric columns
+            numeric_cols = X.select_dtypes(include=['number']).columns.tolist()
+            if numeric_cols:
+                missing_counts = X[numeric_cols].isna().sum()
+                if missing_counts.sum() > 0:
+                    print(f"\nStep: Handling missing values...")
+                    print(f"  Found missing values in: {missing_counts[missing_counts > 0].to_dict()}")
+                    # Fill numeric missing values with median
+                    for col in numeric_cols:
+                        if X[col].isna().sum() > 0:
+                            median_val = X[col].median()
+                            X[col] = X[col].fillna(median_val)
+                            print(f"  ✓ Filled '{col}' missing values with median: {median_val}")
+            
+            # Handle missing values in target
+            if y.isna().sum() > 0:
+                print(f"\nWarning: Target column has {y.isna().sum()} missing values. Dropping these rows...")
+                valid_indices = ~y.isna()
+                X = X[valid_indices]
+                y = y[valid_indices]
+                print(f"✓ New shape after dropping NaN targets: {X.shape}")
+            
+            print(f"\n✓ Preprocessing completed. All data is now numeric.")
+            print(f"Final X dtypes:\n{X.dtypes}")
             
             # Use default random state if not provided
             if random_state is None:
                 random_state = settings.RANDOM_STATE
             
-            # Perform split
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y,
-                test_size=test_size,
-                random_state=random_state,
-                stratify=y if cls._is_classification_target(y) else None
-            )
+            # Perform split - try stratified first, fall back to non-stratified
+            try:
+                # Try stratified split for classification
+                if cls._is_classification_target(y):
+                    X_train, X_test, y_train, y_test = train_test_split(
+                        X, y,
+                        test_size=test_size,
+                        random_state=random_state,
+                        stratify=y
+                    )
+                else:
+                    # Non-stratified for regression
+                    X_train, X_test, y_train, y_test = train_test_split(
+                        X, y,
+                        test_size=test_size,
+                        random_state=random_state
+                    )
+            except ValueError:
+                # If stratified fails (too few samples), use non-stratified
+                X_train, X_test, y_train, y_test = train_test_split(
+                    X, y,
+                    test_size=test_size,
+                    random_state=random_state
+                )
             
             # Store split data
             cls._splits[dataset_id] = {

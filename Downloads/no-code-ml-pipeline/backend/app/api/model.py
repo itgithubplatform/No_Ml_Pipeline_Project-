@@ -25,6 +25,7 @@ async def train_model(request: ModelTrainRequest):
         results = ModelService.train_model(
             dataset_id=request.dataset_id,
             model_type=request.model_type,
+            target_column=request.target_column,
             hyperparameters=request.hyperparameters
         )
         
@@ -38,12 +39,17 @@ async def train_model(request: ModelTrainRequest):
             recall=results.get('recall'),
             f1_score=results.get('f1_score'),
             confusion_matrix=results.get('confusion_matrix'),
+            class_labels=results.get('class_labels'),
             feature_importance=results.get('feature_importance')
         )
         
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        print(f"ERROR TRAINING MODEL: {str(e)}")
+        print(f"FULL TRACEBACK:")
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Error training model: {str(e)}"

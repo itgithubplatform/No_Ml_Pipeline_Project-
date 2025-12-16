@@ -49,4 +49,5 @@ class ModelTrainResponse(BaseModel):
     recall: Optional[float] = None
     f1_score: Optional[float] = None
     confusion_matrix: Optional[list] = None
+    class_labels: Optional[list] = None
     feature_importance: Optional[Dict[str, float]] = None

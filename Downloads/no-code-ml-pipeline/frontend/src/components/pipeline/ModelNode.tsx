@@ -22,7 +22,7 @@ export const ModelNode = memo<NodeProps>(({ data }) => {
 
     const [modelType, setModelType] = useState<'logistic_regression' | 'decision_tree'>('logistic_regression')
 
-    const canTrain = datasetId && targetColumn && splitStatus === 'success'
+    const canTrain = datasetId && targetColumn
 
     const handleTrain = async () => {
         if (!datasetId || !targetColumn) return
@@ -55,12 +55,17 @@ export const ModelNode = memo<NodeProps>(({ data }) => {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {splitStatus !== 'success' ? (
+                    {!datasetId || !targetColumn ? (
                         <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                            <p className="text-xs text-yellow-400">Complete train-test split first</p>
+                            <p className="text-xs text-yellow-400">Upload dataset and select target column first</p>
                         </div>
                     ) : (
                         <>
+                            {splitStatus !== 'success' && (
+                                <div className="p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                                    <p className="text-xs text-blue-300">💡 Train-test split will be performed automatically (70/30)</p>
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-foreground">Model Type</label>
                                 <div className="space-y-2 bg-slate-800/50 p-3 rounded-lg">

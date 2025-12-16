@@ -34,20 +34,64 @@ export const ResultsNode = memo<NodeProps>(({ data }) => {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {/* Main Metrics Grid */}
+                            {/* Model Execution Status Badge */}
+                            <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                                <p className="text-xs text-green-400 text-center font-medium flex items-center justify-center gap-2">
+                                    <Award className="w-4 h-4" />
+                                    ✨ Model Training Complete!
+                                </p>
+                            </div>
+
+                            {/* Main Metrics Grid - Dynamic based on metric type */}
                             <div className="grid grid-cols-2 gap-3">
-                                {/* Accuracy */}
-                                <div className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/30 rounded-lg hover:border-blue-500/50 transition">
+                                {/* Primary Metric: Accuracy or R² */}
+                                <div className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/30 rounded-lg hover:border-blue-500/50 transition col-span-2">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Target className="w-4 h-4 text-blue-400" />
-                                        <p className="text-xs text-slate-400">Accuracy</p>
+                                        <p className="text-xs text-slate-400">
+                                            {modelResults.r2_score !== undefined && modelResults.r2_score !== null
+                                                ? 'R² Score (Coefficient of Determination)'
+                                                : 'Accuracy'}
+                                        </p>
                                     </div>
-                                    <p className="text-3xl font-bold text-blue-400">
-                                        {(modelResults.accuracy * 100).toFixed(1)}%
+                                    <p className="text-4xl font-bold text-blue-400">
+                                        {(modelResults.accuracy * 100).toFixed(2)}%
+                                    </p>
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        {modelResults.r2_score !== undefined && modelResults.r2_score !== null
+                                            ? 'Higher is better • 1.0 = perfect fit'
+                                            : 'Percentage of correct predictions'}
                                     </p>
                                 </div>
 
-                                {/* Precision */}
+                                {/* Regression Metrics */}
+                                {modelResults.rmse !== undefined && modelResults.rmse !== null && (
+                                    <>
+                                        <div className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/30 rounded-lg hover:border-purple-500/50 transition">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <TrendingUp className="w-4 h-4 text-purple-400" />
+                                                <p className="text-xs text-slate-400">RMSE</p>
+                                            </div>
+                                            <p className="text-3xl font-bold text-purple-400">
+                                                {modelResults.rmse.toFixed(3)}
+                                            </p>
+                                            <p className="text-[10px] text-slate-500 mt-1">Root Mean Squared Error</p>
+                                        </div>
+
+                                        <div className="p-4 bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border border-cyan-500/30 rounded-lg hover:border-cyan-500/50 transition">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <BarChart3 className="w-4 h-4 text-cyan-400" />
+                                                <p className="text-xs text-slate-400">MAE</p>
+                                            </div>
+                                            <p className="text-3xl font-bold text-cyan-400">
+                                                {modelResults.mae.toFixed(3)}
+                                            </p>
+                                            <p className="text-[10px] text-slate-500 mt-1">Mean Absolute Error</p>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Classification Metrics */}
                                 {modelResults.precision !== null && modelResults.precision !== undefined && (
                                     <div className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/30 rounded-lg hover:border-purple-500/50 transition">
                                         <div className="flex items-center gap-2 mb-2">
@@ -57,10 +101,10 @@ export const ResultsNode = memo<NodeProps>(({ data }) => {
                                         <p className="text-3xl font-bold text-purple-400">
                                             {(modelResults.precision * 100).toFixed(1)}%
                                         </p>
+                                        <p className="text-[10px] text-slate-500 mt-1">True Positives / Predicted Positives</p>
                                     </div>
                                 )}
 
-                                {/* Recall */}
                                 {modelResults.recall !== null && modelResults.recall !== undefined && (
                                     <div className="p-4 bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border border-cyan-500/30 rounded-lg hover:border-cyan-500/50 transition">
                                         <div className="flex items-center gap-2 mb-2">
@@ -70,12 +114,12 @@ export const ResultsNode = memo<NodeProps>(({ data }) => {
                                         <p className="text-3xl font-bold text-cyan-400">
                                             {(modelResults.recall * 100).toFixed(1)}%
                                         </p>
+                                        <p className="text-[10px] text-slate-500 mt-1">True Positives / Actual Positives</p>
                                     </div>
                                 )}
 
-                                {/* F1 Score */}
                                 {modelResults.f1_score !== null && modelResults.f1_score !== undefined && (
-                                    <div className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/30 rounded-lg hover:border-green-500/50 transition">
+                                    <div className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/30 rounded-lg hover:border-green-500/50 transition col-span-2">
                                         <div className="flex items-center gap-2 mb-2">
                                             <BarChart3 className="w-4 h-4 text-green-400" />
                                             <p className="text-xs text-slate-400">F1 Score</p>
@@ -83,6 +127,7 @@ export const ResultsNode = memo<NodeProps>(({ data }) => {
                                         <p className="text-3xl font-bold text-green-400">
                                             {(modelResults.f1_score * 100).toFixed(1)}%
                                         </p>
+                                        <p className="text-[10px] text-slate-500 mt-1">Harmonic mean of Precision and Recall</p>
                                     </div>
                                 )}
                             </div>
@@ -95,6 +140,12 @@ export const ResultsNode = memo<NodeProps>(({ data }) => {
                                         {modelResults.model_type?.replace('_', ' ') || 'Unknown'}
                                     </p>
                                 </div>
+                                <div className="flex justify-between items-center">
+                                    <p className="text-xs text-slate-500">Task Type</p>
+                                    <p className="text-sm font-medium text-slate-300 capitalize">
+                                        {modelResults.r2_score !== undefined && modelResults.r2_score !== null ? 'Regression' : 'Classification'}
+                                    </p>
+                                </div>
                                 {modelResults.model_id && (
                                     <div className="flex justify-between items-center">
                                         <p className="text-xs text-slate-500">Model ID</p>
@@ -105,14 +156,7 @@ export const ResultsNode = memo<NodeProps>(({ data }) => {
                                 )}
                             </div>
 
-                            {/* Success Badge */}
-                            <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                                <p className="text-xs text-green-400 text-center font-medium">
-                                    ✨ Model Training Complete!
-                                </p>
-                            </div>
-
-                            {/* View Confusion Matrix Button */}
+                            {/* View Confusion Matrix Button - Only for Classification */}
                             {modelResults.confusion_matrix && (
                                 <button
                                     onClick={() => setShowMatrix(true)}

@@ -9,6 +9,7 @@ import { uploadDataset, getDatasetPreview } from '@/lib/api'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { DatasetPreviewTable } from '@/components/shared/DatasetPreviewTable'
 import { TargetColumnSelector } from '@/components/shared/TargetColumnSelector'
+import { DataQualityAlerts } from '@/components/shared/DataQualityAlerts'
 import { getNodeClasses } from '@/lib/nodeStyles'
 import { usePipelineStore } from '@/lib/store'
 
@@ -103,6 +104,14 @@ export const UploadNode = memo<NodeProps>(({ data }) => {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Data Quality Alerts */}
+                            {datasetPreview && (
+                                <DataQualityAlerts
+                                    datasetInfo={datasetInfo}
+                                    datasetPreview={datasetPreview}
+                                />
+                            )}
 
                             {/* View Data Button */}
                             <button

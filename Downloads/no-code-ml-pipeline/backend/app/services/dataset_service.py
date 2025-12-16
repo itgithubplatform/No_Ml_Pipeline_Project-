@@ -64,7 +64,7 @@ class DatasetService:
     @classmethod
     def get_dataset(cls, dataset_id: str) -> pd.DataFrame:
         """
-        Get dataset from memory.
+        Get dataset from memory, reload from disk if necessary.
         
         Args:
             dataset_id: Dataset identifier
@@ -75,12 +75,48 @@ class DatasetService:
         Raises:
             HTTPException: If dataset not found
         """
-        if dataset_id not in cls._datasets:
+        # Check if in memory
+        if dataset_id in cls._datasets:
+            return cls._datasets[dataset_id]
+        
+        # Try to reload from disk
+        try:
+            print(f"Dataset {dataset_id} not in memory, attempting to reload from disk...")
+            file_path = get_dataset_path(dataset_id)
+            
+            # Load based on file extension
+            if file_path.endswith('.csv'):
+                df = pd.read_csv(file_path)
+            elif file_path.endswith(('.xlsx', '.xls')):
+                df = pd.read_excel(file_path)
+            else:
+                raise HTTPException(status_code=400, detail="Unsupported file format")
+            
+            # Store in memory
+            cls._datasets[dataset_id] = df
+            
+            # Recreate metadata if missing
+            if dataset_id not in cls._metadata:
+                info = DatasetInfo(
+                    filename=file_path.split('/')[-1].split('\\')[-1],
+                    rows=len(df),
+                    columns=len(df.columns),
+                    column_names=df.columns.tolist(),
+                    column_types={col: str(dtype) for col, dtype in df.dtypes.items()},
+                    missing_values={col: int(df[col].isna().sum()) for col in df.columns}
+                )
+                cls._metadata[dataset_id] = info
+            
+            print(f"Successfully reloaded dataset {dataset_id} from disk")
+            return df
+            
+        except HTTPException:
+            raise
+        except Exception as e:
             raise HTTPException(
                 status_code=404,
-                detail=f"Dataset not found in memory: {dataset_id}"
+                detail=f"Dataset not found: {dataset_id}. Error: {str(e)}"
             )
-        return cls._datasets[dataset_id]
     
     @classmethod
     def get_dataset_info(cls, dataset_id: str) -> DatasetInfo:
