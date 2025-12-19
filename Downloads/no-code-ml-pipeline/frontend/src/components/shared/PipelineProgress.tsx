@@ -1,14 +1,14 @@
 'use client'
 
 import { usePipelineStore } from '@/lib/store'
-import { Check, Circle, Loader2 } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
 
 const steps = [
-    { id: 1, name: 'Upload Dataset', status: 'uploadStatus' },
+    { id: 1, name: 'Upload', status: 'uploadStatus' },
     { id: 2, name: 'Preprocess', status: 'preprocessStatus' },
-    { id: 3, name: 'Train-Test Split', status: 'splitStatus' },
-    { id: 4, name: 'Train Model', status: 'modelStatus' },
-    { id: 5, name: 'View Results', status: 'modelStatus' },
+    { id: 3, name: 'Split', status: 'splitStatus' },
+    { id: 4, name: 'Train', status: 'modelStatus' },
+    { id: 5, name: 'Results', status: 'modelStatus' },
 ]
 
 export function PipelineProgress() {
@@ -26,7 +26,6 @@ export function PipelineProgress() {
         modelStatus,
     }
 
-    // Calculate current step and completion
     const getCurrentStep = () => {
         if (modelStatus === 'success') return 5
         if (modelStatus === 'training') return 4
@@ -57,81 +56,64 @@ export function PipelineProgress() {
 
     return (
         <div className="w-full max-w-4xl mx-auto">
-            {/* Progress Text */}
-            <div className="flex items-center justify-between mb-3">
-                <div>
-                    <p className="text-sm font-medium text-slate-200">
-                        Pipeline Progress
-                    </p>
-                    <p className="text-xs text-slate-500">
-                        Step {currentStep} of {steps.length}
-                    </p>
-                </div>
-                <div className="text-right">
-                    <p className="text-lg font-bold text-blue-400">
-                        {Math.round(progress)}%
-                    </p>
-                    <p className="text-xs text-slate-500">Complete</p>
-                </div>
+            {/* Compact Info Row */}
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-slate-300">
+                    Step {currentStep}/{steps.length}
+                </span>
+                <span className="text-lg font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                    {Math.round(progress)}%
+                </span>
             </div>
 
-            {/* Progress Bar */}
-            <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden mb-4">
+            {/* Slim Progress Bar */}
+            <div className="relative h-1 bg-slate-800 rounded-full overflow-hidden mb-2">
                 <div
                     className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-500 ease-out"
                     style={{ width: `${progress}%` }}
                 />
             </div>
 
-            {/* Step Indicators */}
-            <div className="flex items-center justify-between">
-                {steps.map((step, index) => {
+            {/* Compact Step Indicators */}
+            <div className="grid grid-cols-5 gap-2">
+                {steps.map((step) => {
                     const status = getStepStatus(step)
 
                     return (
-                        <div key={step.id} className="flex flex-col items-center flex-1">
-                            {/* Step Circle */}
-                            <div className="relative">
-                                <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${status === 'complete'
-                                            ? 'bg-green-500 border-green-500'
-                                            : status === 'processing'
-                                                ? 'bg-blue-500 border-blue-500 animate-pulse'
-                                                : status === 'current'
-                                                    ? 'bg-slate-700 border-blue-500'
-                                                    : 'bg-slate-800 border-slate-700'
-                                        }`}
-                                >
-                                    {status === 'complete' ? (
-                                        <Check className="w-4 h-4 text-white" />
-                                    ) : status === 'processing' ? (
-                                        <Loader2 className="w-4 h-4 text-white animate-spin" />
-                                    ) : (
-                                        <Circle className={`w-3 h-3 ${status === 'current' ? 'text-blue-400' : 'text-slate-600'}`} />
-                                    )}
-                                </div>
-
-                                {/* Connector Line */}
-                                {index < steps.length - 1 && (
-                                    <div
-                                        className={`absolute top-4 left-8 w-full h-0.5 transition-all duration-300 ${step.id < currentStep ? 'bg-green-500' : 'bg-slate-700'
-                                            }`}
-                                        style={{ width: 'calc(100% + 2rem)' }}
-                                    />
+                        <div key={step.id} className="flex flex-col items-center gap-1">
+                            {/* Small Circle */}
+                            <div
+                                className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${status === 'complete'
+                                        ? 'bg-green-500 shadow-sm'
+                                        : status === 'processing'
+                                            ? 'bg-blue-500 animate-pulse shadow-sm'
+                                            : status === 'current'
+                                                ? 'bg-slate-700 border border-blue-500'
+                                                : 'bg-slate-800 border border-slate-700'
+                                    }`}
+                            >
+                                {status === 'complete' ? (
+                                    <Check className="w-3 h-3 text-white" />
+                                ) : status === 'processing' ? (
+                                    <Loader2 className="w-3 h-3 text-white animate-spin" />
+                                ) : (
+                                    <span className={`text-[9px] font-bold ${status === 'current' ? 'text-blue-400' : 'text-slate-600'}`}>
+                                        {step.id}
+                                    </span>
                                 )}
                             </div>
 
-                            {/* Step Label */}
-                            <p
-                                className={`text-xs mt-2 text-center transition-colors duration-300 ${status === 'complete'
-                                        ? 'text-green-400 font-medium'
+                            {/* Compact Label */}
+                            <span
+                                className={`text-[9px] font-medium text-center leading-tight transition-colors duration-300 ${status === 'complete'
+                                        ? 'text-green-400'
                                         : status === 'processing' || status === 'current'
-                                            ? 'text-blue-400 font-medium'
+                                            ? 'text-blue-400'
                                             : 'text-slate-500'
                                     }`}
                             >
                                 {step.name}
-                            </p>
+                            </span>
                         </div>
                     )
                 })}

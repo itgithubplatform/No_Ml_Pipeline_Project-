@@ -108,8 +108,8 @@ export function PipelineCanvas() {
 
     return (
         <div className="w-full h-full bg-slate-950 relative">
-            {/* Progress Tracker */}
-            <ProgressTracker />
+            {/* Progress Tracker - Now in header, hidden here */}
+            {/* <ProgressTracker /> */}
 
             {/* Help Panel */}
             <HelpPanel />
