@@ -25,7 +25,9 @@ export const metadata: Metadata = {
         title: 'FlowML Studio',
         description: 'Visual ML Pipeline Builder - No Code Required',
     },
-    metadataBase: new URL('http://localhost:3000'),
+    metadataBase: process.env.NEXT_PUBLIC_APP_URL
+        ? new URL(process.env.NEXT_PUBLIC_APP_URL)
+        : undefined,
 }
 
 export const viewport: Viewport = {
